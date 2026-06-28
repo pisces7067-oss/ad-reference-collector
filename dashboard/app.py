@@ -280,9 +280,37 @@ def as_list(value) -> list:
     return []
 
 
+def _cdn_urls_from_raw(ad: dict) -> tuple[str | None, str | None, str | None]:
+    """raw_json에서 (image_url, video_preview_url, video_url) 추출."""
+    raw = ad.get("raw_json")
+    if not raw:
+        return None, None, None
+    try:
+        data = json.loads(raw) if isinstance(raw, str) else raw
+        snap = data.get("snapshot", {})
+        image_url = None
+        for img in snap.get("images", []):
+            url = img.get("original_image_url") or img.get("resized_image_url") or img.get("url")
+            if url:
+                image_url = url
+                break
+        video_preview_url = None
+        video_url = None
+        for vid in snap.get("videos", []):
+            if not video_preview_url:
+                video_preview_url = vid.get("video_preview_image_url")
+            if not video_url:
+                video_url = vid.get("video_hd_url") or vid.get("video_sd_url")
+            if video_preview_url and video_url:
+                break
+        return image_url, video_preview_url, video_url
+    except Exception:
+        return None, None, None
+
+
 def image_for_ad(ad: dict) -> Path | str | None:
     """영상은 preview 이미지만 사용해서 갤러리를 이미지형으로 유지한다.
-    로컬 파일이 없으면 DB의 원본 URL을 반환한다."""
+    로컬 파일이 없으면 raw_json의 CDN URL을 반환한다."""
     media_paths = as_list(ad.get("media_paths"))
     preferred = [p for p in media_paths if "preview_" in Path(p).name]
     preferred += [p for p in media_paths if "image_" in Path(p).name]
@@ -292,28 +320,26 @@ def image_for_ad(ad: dict) -> Path | str | None:
         if path.exists():
             return path
 
-    # 로컬 파일 없음 → 원본 CDN URL 폴백
-    for item in as_list(ad.get("media_urls")):
-        if isinstance(item, dict) and item.get("type") == "image":
-            url = item.get("url", "")
-            if url:
-                return url
-    return None
+    # 로컬 파일 없음 → raw_json CDN URL 폴백
+    image_url, video_preview_url, _ = _cdn_urls_from_raw(ad)
+    return image_url or video_preview_url or None
 
 
-def video_path_for_ad(ad: dict) -> Path | None:
-    """광고의 영상 파일 경로(있을 경우)."""
+def video_path_for_ad(ad: dict) -> Path | str | None:
+    """광고의 영상 파일 경로 또는 CDN URL(있을 경우)."""
     for rel in as_list(ad.get("media_paths")):
         name = Path(rel).name
         if name.endswith((".mp4", ".mov", ".webm")) or "video_" in name:
             path = media_abspath(rel)
             if path.exists() and path.is_file():
                 return path
-    return None
+    # 로컬 없음 → raw_json CDN URL
+    _, _, video_url = _cdn_urls_from_raw(ad)
+    return video_url or None
 
 
 def thumbnail_path_for_ad(ad: dict) -> Path | str | None:
-    """다운로드용 썸네일: preview_ 우선 → image_ → 첫 이미지 → CDN URL 폴백."""
+    """다운로드용 썸네일: preview_ 우선 → image_ → CDN URL 폴백."""
     media_paths = as_list(ad.get("media_paths"))
     for rel in media_paths:
         if "preview_" in Path(rel).name:
@@ -326,12 +352,8 @@ def thumbnail_path_for_ad(ad: dict) -> Path | str | None:
             path = media_abspath(rel)
             if path.exists():
                 return path
-    for item in as_list(ad.get("media_urls")):
-        if isinstance(item, dict) and item.get("type") == "image":
-            url = item.get("url", "")
-            if url:
-                return url
-    return None
+    image_url, video_preview_url, _ = _cdn_urls_from_raw(ad)
+    return image_url or video_preview_url or None
 
 
 def ad_library_url(ad_id: str) -> str:
@@ -487,8 +509,11 @@ def show_ad_detail(ad: dict) -> None:
     col_media, col_info = st.columns([1.45, 1])
 
     with col_media:
-        if video and isinstance(video, Path) and video.exists():
-            st.video(str(video))
+        if video:
+            if isinstance(video, Path):
+                st.video(str(video))
+            else:
+                st.video(video)
         elif thumb:
             st.image(str(thumb) if isinstance(thumb, Path) else thumb, width="stretch")
         else:
@@ -496,7 +521,7 @@ def show_ad_detail(ad: dict) -> None:
 
         dl_left, dl_right = st.columns(2)
         with dl_left:
-            if thumb and thumb.exists():
+            if thumb and isinstance(thumb, Path) and thumb.exists():
                 st.download_button(
                     "⬇  썸네일 다운로드",
                     data=thumb.read_bytes(),
@@ -508,7 +533,7 @@ def show_ad_detail(ad: dict) -> None:
             else:
                 st.button("⬇  썸네일 없음", disabled=True, width="stretch", key=f"dl_thumb_na_{ad_id}")
         with dl_right:
-            if video and video.exists():
+            if video and isinstance(video, Path) and video.exists():
                 st.download_button(
                     "⬇  영상 다운로드",
                     data=video.read_bytes(),
