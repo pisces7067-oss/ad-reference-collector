@@ -622,6 +622,11 @@ def render_gallery(ads: list[dict], namespace: str = "main") -> None:
 
 competitors = db.list_competitors(only_active=False)
 config = load_config()
+
+# config.json 순서대로 경쟁사 정렬
+_config_order = {c["page_id"]: i for i, c in enumerate(config.get("competitors", []))}
+competitors = sorted(competitors, key=lambda c: _config_order.get(c["page_id"], 9999))
+
 competitor_options = {
     f"{c['page_name']} ({c['page_id']})": c["page_id"] for c in competitors
 }
