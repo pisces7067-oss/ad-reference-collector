@@ -700,9 +700,9 @@ with st.sidebar:
     media_filter = st.radio("소재 유형", ["전체", "이미지", "영상"], horizontal=True)
     min_active_days = st.slider("최소 게재일", 0, 60, 0)
 
-    st.markdown("---")
     db_url = notion_db_url(config)
     if db_url:
+        st.markdown("---")
         st.link_button(
             "📂  광고 DB 열기  ↗",
             db_url,
@@ -712,7 +712,8 @@ with st.sidebar:
         st.caption('클로드 코드에게 "노션에 올려줘" 라고 말하면 자동 정리됩니다')
 
     st.markdown("---")
-    st.caption("매주 월요일 오후 12시에 자동 수집됩니다.\n경쟁사를 추가하고 싶다면 페이지명과 view_all_page_id를 전달해주세요.")
+    st.caption("매주 월요일 오후 12시에 자동 수집됩니다.")
+    st.caption("경쟁사를 추가하고 싶다면 페이지명과 view_all_page_id를 전달해주세요.")
 
     last_runs = db.last_run_summary()
     if last_runs:
