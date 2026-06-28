@@ -1,0 +1,18 @@
+# 비밀/대용량/캐시는 올리지 않기
+config.json
+.env
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# 로그·임시 파일
+data/logs/
+data/ads.db-journal
+data/debug_screenshot.png
+
+# 다운로드된 미디어 파일 (용량이 커서 제외)
+data/media/
+
+# config.json은 배포 시 별도 설정 필요
+config.json
