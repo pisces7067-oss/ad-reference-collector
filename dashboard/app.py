@@ -675,8 +675,6 @@ with st.sidebar:
             type="primary",
         )
         st.caption('클로드 코드에게 "노션에 올려줘" 라고 말하면 자동 정리됩니다')
-    else:
-        st.caption("노션 연동 미설정 — config.json의 notion 섹션을 채워주세요.")
 
     last_runs = db.last_run_summary()
     if last_runs:
