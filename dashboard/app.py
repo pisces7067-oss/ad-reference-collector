@@ -623,8 +623,13 @@ def render_gallery(ads: list[dict], namespace: str = "main") -> None:
 competitors = db.list_competitors(only_active=False)
 config = load_config()
 
-# config.json 순서대로 경쟁사 정렬
-_config_order = {c["page_id"]: i for i, c in enumerate(config.get("competitors", []))}
+# competitors.json → config.json 순으로 경쟁사 순서 결정
+_order_file = ROOT / "competitors.json"
+if _order_file.exists():
+    _ordered_ids = json.loads(_order_file.read_text(encoding="utf-8"))
+    _config_order = {pid: i for i, pid in enumerate(_ordered_ids)}
+else:
+    _config_order = {c["page_id"]: i for i, c in enumerate(config.get("competitors", []))}
 competitors = sorted(competitors, key=lambda c: _config_order.get(c["page_id"], 9999))
 
 competitor_options = {
