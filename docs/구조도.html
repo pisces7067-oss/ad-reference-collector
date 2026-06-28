@@ -1,0 +1,466 @@
+<title>광고 레퍼런스 수집기 — 시스템 구조도</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0D1117;
+    color: #E6EDF3;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    padding: 48px 32px;
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    margin-bottom: 52px;
+  }
+  .header-eyebrow {
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: #1C98FE;
+    margin-bottom: 10px;
+  }
+  .header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #E6EDF3;
+    letter-spacing: -0.5px;
+  }
+  .header-sub {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #586374;
+  }
+
+  /* ── Main 3-column grid ── */
+  .diagram {
+    display: grid;
+    grid-template-columns: 220px 1fr 220px;
+    gap: 0 32px;
+    max-width: 900px;
+    margin: 0 auto;
+    align-items: start;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: #161B22;
+    border: 1px solid #21293A;
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .card-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #E6EDF3;
+    margin-bottom: 4px;
+  }
+  .card-sub {
+    font-size: 11px;
+    color: #586374;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+  .card-tag {
+    display: inline-block;
+    margin-top: 7px;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+  }
+  .tag-blue   { background: #1C98FE22; color: #1C98FE; border: 1px solid #1C98FE44; }
+  .tag-green  { background: #3FB95022; color: #3FB950; border: 1px solid #3FB95044; }
+  .tag-purple { background: #A371F722; color: #A371F7; border: 1px solid #A371F744; }
+  .tag-gray   { background: #8B949E22; color: #8B949E; border: 1px solid #8B949E44; }
+
+  /* ── Left column: competitors ── */
+  .col-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .col-left-label {
+    font-size: 10px;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: #586374;
+    margin-bottom: 12px;
+    padding-left: 2px;
+  }
+  .competitor-list {
+    background: #161B22;
+    border: 1px solid #21293A;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .competitor-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 14px;
+    border-bottom: 1px solid #21293A;
+    font-size: 12px;
+    color: #C9D1D9;
+  }
+  .competitor-item:last-child { border-bottom: none; }
+  .competitor-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #1C98FE;
+    flex-shrink: 0;
+  }
+  .left-arrow-area {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 0 0 0;
+    margin-top: 24px;
+  }
+
+  /* ── Center pipeline ── */
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .pipe-node {
+    width: 100%;
+    background: #161B22;
+    border: 1px solid #21293A;
+    border-radius: 10px;
+    padding: 16px 20px;
+    position: relative;
+    transition: border-color 0.15s;
+  }
+  .pipe-node.accent {
+    border-color: #1C98FE55;
+    box-shadow: 0 0 0 1px #1C98FE22 inset;
+  }
+  .pipe-node-icon {
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+  .pipe-node-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #E6EDF3;
+    margin-bottom: 3px;
+  }
+  .pipe-node-file {
+    font-size: 10px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    color: #8B949E;
+    margin-bottom: 8px;
+  }
+  .pipe-node-desc {
+    font-size: 11.5px;
+    color: #8B949E;
+    line-height: 1.5;
+  }
+  .pipe-node-methods {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .method-pill {
+    font-size: 10px;
+    background: #1C98FE15;
+    border: 1px solid #1C98FE30;
+    color: #7EC8FA;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+
+  /* connector arrow */
+  .connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 0;
+    gap: 0;
+  }
+  .connector-line {
+    width: 2px;
+    height: 20px;
+    background: linear-gradient(to bottom, #21293A, #1C98FE55);
+  }
+  .connector-arrow {
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 7px solid #1C98FE88;
+  }
+  .connector-label {
+    font-size: 10px;
+    color: #586374;
+    margin: 3px 0 0;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Right column: automation ── */
+  .col-right {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .col-right-label {
+    font-size: 10px;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: #586374;
+    margin-bottom: 4px;
+    padding-left: 2px;
+  }
+  .auto-node {
+    background: #161B22;
+    border: 1px solid #21293A;
+    border-radius: 10px;
+    padding: 13px 14px;
+  }
+  .auto-node-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #E6EDF3;
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .auto-node-sub {
+    font-size: 10.5px;
+    color: #8B949E;
+    line-height: 1.45;
+  }
+  .auto-connector {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0 0 0 20px;
+  }
+  .auto-connector-line {
+    width: 2px;
+    height: 14px;
+    background: #3FB95044;
+  }
+
+  .green-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #3FB950;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  /* ── Footer stats ── */
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin-top: 44px;
+    padding-top: 28px;
+    border-top: 1px solid #21293A;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .stat {
+    text-align: center;
+  }
+  .stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1C98FE;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: #586374;
+    margin-top: 3px;
+    letter-spacing: 0.3px;
+  }
+
+  .mt44 { margin-top: 44px; }
+  .right-arrow {
+    font-size: 16px;
+    color: #1C98FE88;
+    align-self: center;
+    margin-top: 60px;
+  }
+</style>
+
+<div class="header">
+  <div class="header-eyebrow">System Architecture</div>
+  <h1>광고 레퍼런스 수집기</h1>
+  <div class="header-sub">김소연 · 경쟁사 광고 자동 수집 파이프라인</div>
+</div>
+
+<div class="diagram">
+
+  <!-- LEFT: 경쟁사 목록 -->
+  <div class="col-left">
+    <div class="col-left-label">경쟁사 10개</div>
+    <div class="competitor-list">
+      <div class="competitor-item"><span class="competitor-dot"></span>티오더</div>
+      <div class="competitor-item"><span class="competitor-dot"></span>토스플레이스</div>
+      <div class="competitor-item"><span class="competitor-dot"></span>메이트 MATE</div>
+      <div class="competitor-item"><span class="competitor-dot"></span>Npaybiz</div>
+      <div class="competitor-item"><span class="competitor-dot"></span>메뉴잇</div>
+      <div class="competitor-item"><span class="competitor-dot"></span>비버매장연구소</div>
+      <div class="competitor-item"><span class="competitor-dot"></span>아이샵케어</div>
+      <div class="competitor-item"><span class="competitor-dot"></span>KCP POS+</div>
+      <div class="competitor-item"><span class="competitor-dot"></span>카카오페이</div>
+      <div class="competitor-item"><span class="competitor-dot"></span>네이버페이</div>
+    </div>
+  </div>
+
+  <!-- CENTER: 메인 파이프라인 -->
+  <div class="pipeline">
+
+    <div class="pipe-node accent">
+      <div class="pipe-node-icon">📘</div>
+      <div class="pipe-node-name">Facebook 광고 라이브러리</div>
+      <div class="pipe-node-file">facebook.com/ads/library</div>
+      <div class="pipe-node-desc">경쟁사 페이지 ID로 광고 데이터 조회<br>country=ALL · active_status=all</div>
+    </div>
+
+    <div class="connector">
+      <div class="connector-line"></div>
+      <div class="connector-arrow"></div>
+    </div>
+
+    <div class="pipe-node">
+      <div class="pipe-node-icon">🤖</div>
+      <div class="pipe-node-name">스크래퍼</div>
+      <div class="pipe-node-file">scraper/main.py · extractor.py</div>
+      <div class="pipe-node-desc">Playwright + Chrome으로 광고 수집<br>두 가지 파싱 방식 자동 전환</div>
+      <div class="pipe-node-methods">
+        <span class="method-pill">GraphQL 인터셉트</span>
+        <span class="method-pill">HTML 내장 파싱</span>
+      </div>
+    </div>
+
+    <div class="connector">
+      <div class="connector-line"></div>
+      <div class="connector-arrow"></div>
+    </div>
+
+    <div class="pipe-node">
+      <div class="pipe-node-icon">🗄️</div>
+      <div class="pipe-node-name">SQLite 데이터베이스</div>
+      <div class="pipe-node-file">data/ads.db</div>
+      <div class="pipe-node-desc">경쟁사별 광고 저장<br>중복 제거 · CDN URL 보존</div>
+    </div>
+
+    <div class="connector">
+      <div class="connector-line"></div>
+      <div class="connector-arrow"></div>
+    </div>
+
+    <div class="pipe-node accent">
+      <div class="pipe-node-icon">📊</div>
+      <div class="pipe-node-name">Streamlit 대시보드</div>
+      <div class="pipe-node-file">dashboard/app.py</div>
+      <div class="pipe-node-desc">갤러리 · 필터 · 찜하기 · 다운로드</div>
+      <div class="pipe-node-methods">
+        <span class="method-pill">이미지/영상</span>
+        <span class="method-pill">활성 필터</span>
+        <span class="method-pill">게재일 필터</span>
+      </div>
+    </div>
+
+    <div class="connector">
+      <div class="connector-line"></div>
+      <div class="connector-arrow"></div>
+    </div>
+
+    <div class="pipe-node">
+      <div class="pipe-node-icon">🐙</div>
+      <div class="pipe-node-name">GitHub Repository</div>
+      <div class="pipe-node-file">pisces7067-oss/ad-reference-collector</div>
+      <div class="pipe-node-desc">코드 + DB 버전 관리<br>push 시 자동 재배포 트리거</div>
+    </div>
+
+    <div class="connector">
+      <div class="connector-line"></div>
+      <div class="connector-arrow"></div>
+    </div>
+
+    <div class="pipe-node accent">
+      <div class="pipe-node-icon">☁️</div>
+      <div class="pipe-node-name">Streamlit Cloud</div>
+      <div class="pipe-node-file">ad-reference-collector-soyeon.streamlit.app</div>
+      <div class="pipe-node-desc">공개 배포 · 누구나 접근 가능</div>
+      <span class="card-tag tag-green">배포 중</span>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: 자동화 -->
+  <div class="col-right">
+    <div class="col-right-label">자동화</div>
+
+    <div class="auto-node">
+      <div class="auto-node-title"><span class="green-dot"></span>launchd</div>
+      <div class="auto-node-sub">macOS 스케줄러<br>매주 월요일 오후 12시</div>
+    </div>
+
+    <div class="auto-connector"><div class="auto-connector-line"></div></div>
+
+    <div class="auto-node">
+      <div class="auto-node-title">run_daily.sh</div>
+      <div class="auto-node-sub">scripts/run_daily.sh<br>전체 경쟁사 순차 수집</div>
+    </div>
+
+    <div class="auto-connector"><div class="auto-connector-line"></div></div>
+
+    <div class="auto-node">
+      <div class="auto-node-title">git push</div>
+      <div class="auto-node-sub">DB 변경 감지 시<br>자동 커밋 + push</div>
+    </div>
+
+    <div class="auto-connector"><div class="auto-connector-line"></div></div>
+
+    <div class="auto-node" style="border-color:#3FB95044;">
+      <div class="auto-node-title"><span class="green-dot"></span>자동 재배포</div>
+      <div class="auto-node-sub">GitHub push 감지<br>Streamlit Cloud 갱신</div>
+    </div>
+
+    <div style="margin-top:16px; background:#161B22; border:1px solid #21293A; border-radius:10px; padding:12px 14px;">
+      <div style="font-size:10px; color:#586374; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:8px;">설정 파일</div>
+      <div style="font-size:11px; font-family:'SF Mono','Fira Code',monospace; color:#8B949E; line-height:1.8;">
+        config.json<br>
+        competitors.json<br>
+        .streamlit/config.toml<br>
+        .gitignore
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Stats -->
+<div class="stats">
+  <div class="stat">
+    <div class="stat-value">10</div>
+    <div class="stat-label">경쟁사</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">255+</div>
+    <div class="stat-label">수집된 광고</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">주 1회</div>
+    <div class="stat-label">자동 수집</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">2일</div>
+    <div class="stat-label">개발 기간</div>
+  </div>
+</div>
