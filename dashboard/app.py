@@ -678,6 +678,34 @@ with st.sidebar:
         run_collect_dialog(cmd)
     st.caption("⚠️ 봇 차단 방지를 위해 너무 자주 누르지 마세요. 휴식·차단 감지 로직은 그대로 동작합니다.")
 
+    if CONFIG_PATH.exists():
+        st.markdown("---")
+        with st.expander("➕ 경쟁사 추가"):
+            new_name = st.text_input("페이지명", placeholder="예: 티오더", key="new_name")
+            new_id = st.text_input("Page ID", placeholder="예: 110991598593679", key="new_id")
+            if st.button("추가 + 수집 시작", type="primary", width="stretch", key="add_competitor_btn"):
+                name = new_name.strip()
+                pid = new_id.strip()
+                if not name or not pid:
+                    st.error("페이지명과 Page ID를 모두 입력해주세요.")
+                elif not pid.isdigit():
+                    st.error("Page ID는 숫자만 입력해주세요.")
+                else:
+                    existing_ids = [c["page_id"] for c in db.list_competitors(only_active=False)]
+                    if pid in existing_ids:
+                        st.warning(f"이미 등록된 경쟁사예요. (Page ID: {pid})")
+                    else:
+                        cfg = load_config()
+                        cfg.setdefault("competitors", []).append({"page_id": pid, "page_name": name, "notes": ""})
+                        CONFIG_PATH.write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
+                        order_file = ROOT / "competitors.json"
+                        if order_file.exists():
+                            ordered = json.loads(order_file.read_text(encoding="utf-8"))
+                            ordered.append(pid)
+                            order_file.write_text(json.dumps(ordered, ensure_ascii=False, indent=2), encoding="utf-8")
+                        cmd = [sys.executable, str(ROOT / "scraper" / "main.py"), "--page-id", pid]
+                        run_collect_dialog(cmd)
+
     raw_ads = load_ads_for_page(selected_page_id)
     raw_df = to_frame(raw_ads)
 
