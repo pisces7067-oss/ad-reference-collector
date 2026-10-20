@@ -665,18 +665,22 @@ with st.sidebar:
 
     # ── ⚡ 지금 수집 (스케줄러를 기다리지 않고 현재 기준으로 즉시 일괄 수집) ──
     st.markdown("---")
-    collect_scope = st.radio(
-        "수집 범위",
-        ["선택 경쟁사만", "전체 경쟁사"],
-        horizontal=True,
-        key="collect_scope",
-    )
-    if st.button("⚡  지금 수집", key="collect_now_btn", type="primary", width="stretch"):
-        cmd = [sys.executable, str(ROOT / "scraper" / "main.py")]
-        if collect_scope == "선택 경쟁사만" and selected_page_id:
-            cmd += ["--page-id", str(selected_page_id)]
-        run_collect_dialog(cmd)
-    st.caption("⚠️ 봇 차단 방지를 위해 너무 자주 누르지 마세요. 휴식·차단 감지 로직은 그대로 동작합니다.")
+    # 웹 배포본(Streamlit Cloud)엔 config.json이 없어 수집 불가 — 수집은 내 Mac에서만
+    if CONFIG_PATH.exists():
+        collect_scope = st.radio(
+            "수집 범위",
+            ["선택 경쟁사만", "전체 경쟁사"],
+            horizontal=True,
+            key="collect_scope",
+        )
+        if st.button("⚡  지금 수집", key="collect_now_btn", type="primary", width="stretch"):
+            cmd = [sys.executable, str(ROOT / "scraper" / "main.py")]
+            if collect_scope == "선택 경쟁사만" and selected_page_id:
+                cmd += ["--page-id", str(selected_page_id)]
+            run_collect_dialog(cmd)
+        st.caption("⚠️ 봇 차단 방지를 위해 너무 자주 누르지 마세요. 휴식·차단 감지 로직은 그대로 동작합니다.")
+    else:
+        st.caption("🗓️ 수집은 매주 월요일 12시에 내 Mac에서 자동으로 돌고, 끝나면 이 사이트에 반영돼요.")
 
     if CONFIG_PATH.exists():
         st.markdown("---")
