@@ -6,7 +6,9 @@ from __future__ import annotations
 
 import base64
 import json
+import re
 import subprocess
+import time
 import sys
 import zipfile
 from io import BytesIO
@@ -22,6 +24,7 @@ sys.path.insert(0, str(ROOT))
 from scraper import db
 
 DATA_ROOT = ROOT / "data"
+THUMB_ROOT = DATA_ROOT / "thumbs"  # 웹 배포용 작은 썸네일 (scripts/make_thumbs.py)
 CONFIG_PATH = ROOT / "config.json"
 
 from PIL import Image as _Image
@@ -280,8 +283,23 @@ def as_list(value) -> list:
     return []
 
 
+def _thumb_for_ad(ad: dict) -> Path | None:
+    path = THUMB_ROOT / f"{ad.get('ad_id')}.webp"
+    return path if path.exists() else None
+
+
+def _cdn_alive(url: str | None) -> str | None:
+    """페이스북 CDN 주소는 oe=(16진수 만료 시각) 이후 403 — 만료된 주소는 버린다."""
+    if not url:
+        return None
+    m = re.search(r"[?&]oe=([0-9A-Fa-f]{8})", url)
+    if m and int(m.group(1), 16) < time.time():
+        return None
+    return url
+
+
 def _cdn_urls_from_raw(ad: dict) -> tuple[str | None, str | None, str | None]:
-    """raw_json에서 (image_url, video_preview_url, video_url) 추출."""
+    """raw_json에서 (image_url, video_preview_url, video_url) 추출. 만료된 주소는 None."""
     raw = ad.get("raw_json")
     if not raw:
         return None, None, None
@@ -303,7 +321,7 @@ def _cdn_urls_from_raw(ad: dict) -> tuple[str | None, str | None, str | None]:
                 video_url = vid.get("video_hd_url") or vid.get("video_sd_url")
             if video_preview_url and video_url:
                 break
-        return image_url, video_preview_url, video_url
+        return _cdn_alive(image_url), _cdn_alive(video_preview_url), _cdn_alive(video_url)
     except Exception:
         return None, None, None
 
@@ -320,7 +338,10 @@ def image_for_ad(ad: dict) -> Path | str | None:
         if path.exists():
             return path
 
-    # 로컬 파일 없음 → raw_json CDN URL 폴백
+    # 원본 없음(웹 배포본) → 썸네일 → raw_json CDN URL 폴백
+    thumb = _thumb_for_ad(ad)
+    if thumb:
+        return thumb
     image_url, video_preview_url, _ = _cdn_urls_from_raw(ad)
     return image_url or video_preview_url or None
 
@@ -352,6 +373,9 @@ def thumbnail_path_for_ad(ad: dict) -> Path | str | None:
             path = media_abspath(rel)
             if path.exists():
                 return path
+    thumb = _thumb_for_ad(ad)
+    if thumb:
+        return thumb
     image_url, video_preview_url, _ = _cdn_urls_from_raw(ad)
     return image_url or video_preview_url or None
 

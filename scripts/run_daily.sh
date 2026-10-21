@@ -22,8 +22,11 @@ fi
 # 전체 경쟁사 수집
 python scraper/main.py >> "$LOG_FILE" 2>&1
 
-# DB 변경 있으면 커밋 + push
-git add data/ads.db
+# 웹사이트용 썸네일 (원본 data/media는 용량 때문에 GitHub 제외)
+python scripts/make_thumbs.py >> "$LOG_FILE" 2>&1
+
+# DB·썸네일 변경 있으면 커밋 + push
+git add data/ads.db data/thumbs
 if ! git diff --cached --quiet; then
     git commit -m "자동 수집: ${TODAY}" >> "$LOG_FILE" 2>&1
     git push origin main >> "$LOG_FILE" 2>&1
